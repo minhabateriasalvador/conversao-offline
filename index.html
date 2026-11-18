@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Conversão Offline - Minha Bateria</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #0b0f17;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 36px 28px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    .badge {
+      display: inline-block;
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    p.desc {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .btn-wpp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      background-color: #000000;
+      color: #ffffff;
+      border: 1px solid #374151;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+    .btn-wpp:hover {
+      background-color: #111111;
+      border-color: #4b5563;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    }
+    .btn-wpp svg {
+      width: 22px;
+      height: 22px;
+      fill: #25d366;
+    }
+    .debug-box {
+      margin-top: 32px;
+      background: #030712;
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: left;
+      font-size: 12px;
+    }
+    .debug-title {
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+    .debug-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #111827;
+      word-break: break-all;
+    }
+    .debug-row:last-child {
+      border-bottom: none;
+    }
+    .debug-label {
+      color: #94a3b8;
+      font-weight: 500;
+      min-width: 105px;
+    }
+    .debug-val {
+      color: #38bdf8;
+      font-family: monospace;
+      text-align: right;
+    }
+    .status-ok {
+      color: #34d399 !important;
+    }
+    .status-loading {
+      color: #fbbf24 !important;
+    }
+    .status-err {
+      color: #f87171 !important;
+    }
+    .invisible-preview {
+      margin-top: 10px;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 6px;
+      color: #a78bfa;
+      font-family: monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <span class="badge">Ambiente de Teste Neon + Vercel</span>
+    <h1>Conversão Offline Google Ads</h1>
+    <p class="desc">Ao acessar com o parâmetro <code>?gclid=...</code>, a API grava a referência no banco Neon e injeta o código invisível no WhatsApp.</p>
+
+    <!-- Botão para WhatsApp -->
+    <a id="wpp-btn" class="btn-wpp" href="#" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24">
+        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84a8.18 8.18 0 0 1-5.82 2.41h-.01c-1.42 0-2.82-.37-4.06-1.07l-.29-.17-3.02.79.81-2.94-.19-.3a8.19 8.19 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.22.89 2.41 1.02 2.58.13.17 1.76 2.68 4.26 3.76.6.26 1.06.41 1.42.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.19-.06-.09-.23-.15-.48-.28z"/>
+      </svg>
+      <span>Pedir Bateria no WhatsApp</span>
+    </a>
+
+    <!-- Painel de diagnóstico -->
+    <div class="debug-box">
+      <div class="debug-title">Diagnóstico de Gravação no Neon</div>
+      <div class="debug-row">
+        <span class="debug-label">Status Neon:</span>
+        <span class="debug-val status-loading" id="dbg-status">Aguardando API...</span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">GCLID URL:</span>
+        <span class="debug-val" id="dbg-gclid">Não detectado</span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Ref Gerada:</span>
+        <span class="debug-val" id="dbg-ref">---</span>
+      </div>
+      <div class="debug-row">
+        <span class="debug-label">Tamanho Invisível:</span>
+        <span class="debug-val" id="dbg-len">0 bytes</span>
+      </div>
+      <div class="invisible-preview">
+        <div style="color: #64748b; margin-bottom: 4px;">Link do WhatsApp montado:</div>
+        <div id="dbg-link">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FRASE_BASE = "( Testando conversão offline Google Ads ) - ";
+    const TELEFONE = "5571993151471";
+
+    async function iniciar() {
+      const p = new URLSearchParams(window.location.search);
+      let gclid = p.get('gclid') || p.get('gbraid') || p.get('wbraid');
+
+      // Se for acesso direto sem parâmetros, cria um simulado para facilitar o teste
+      const isSimulado = !gclid;
+      if (!gclid) {
+        gclid = 'SIMULADO_' + Math.random().toString(36).substring(2, 9).toUpperCase();
+      }
+
+      document.getElementById('dbg-gclid').innerText = gclid + (isSimulado ? " (simulado)" : "");
+
+      try {
+        document.getElementById('dbg-status').innerText = 'Gravando no Neon...';
+
+        const resposta = await fetch('/api/captura', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gclid: gclid,
+            landing_url: window.location.href,
+            ads_account: p.get('ads_account') || 'principal'
+          })
+        });
+
+        const dados = await resposta.json();
+
+        if (dados.success && dados.ref && dados.invisivel) {
+          document.getElementById('dbg-status').innerText = 'Gravado no Neon com Sucesso!';
+          document.getElementById('dbg-status').className = 'debug-val status-ok';
+          document.getElementById('dbg-ref').innerText = dados.ref;
+          document.getElementById('dbg-len').innerText = dados.invisivel.length + ' bytes invisíveis';
+
+          // Monta o link do WhatsApp com a ref invisível oficial retornada pelo Neon
+          const textoFinal = FRASE_BASE + dados.invisivel;
+          const urlWpp = "https://wa.me/" + TELEFONE + "?text=" + encodeURIComponent(textoFinal);
+
+          const btn = document.getElementById('wpp-btn');
+          btn.href = urlWpp;
+
+          document.getElementById('dbg-link').innerText = urlWpp;
+        } else {
+          throw new Error(dados.error || 'Falha ao obter resposta da API');
+        }
+
+      } catch (err) {
+        console.error('Erro na captura:', err);
+        document.getElementById('dbg-status').innerText = 'Erro: ' + (err.message || 'Ver console');
+        document.getElementById('dbg-status').className = 'debug-val status-err';
+        
+        // Fallback para o botão nunca quebrar pro cliente
+        const btn = document.getElementById('wpp-btn');
+        btn.href = "https://wa.me/" + TELEFONE + "?text=" + encodeURIComponent(FRASE_BASE);
+        document.getElementById('dbg-link').innerText = btn.href;
+      }
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>

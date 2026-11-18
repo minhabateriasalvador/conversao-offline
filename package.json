@@ -1,0 +1,9 @@
+{
+  "name": "teste-conversao-offline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}
