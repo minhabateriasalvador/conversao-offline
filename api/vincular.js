@@ -1,6 +1,15 @@
 import { neon } from '@neondatabase/serverless';
 import { decodificarInvisivel } from '../lib/ref-invisivel.js';
 
+// IDs oficiais dos Custom Fields da subconta Minha Bateria
+const GHL_FIELD_IDS = {
+  GCLID: 'MOG14QopyW0T9VWYwmHc',
+  GBRAID: 'ijEMGMXnrDKL4uSisd84',
+  WBRAID: 'oCqYlY6GRMUkqpFeKZE2',
+  CODIGO_WHATSAPP: 'LLdYtNpi4vgl2MIOv3XR',
+  DATA_HORARIO: '1xyTbwoNC4gmmEv03WDT'
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -25,7 +34,7 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     
-    // Suporta tanto chaves diretas quanto os formatos padrão de webhook do GHL
+    // Suporta chaves diretas ou payload completo do GHL
     const contactId = body.contact_id || body.contactId || body.contact?.id;
     const messageText = body.message_body || body.message?.body || body.body || '';
 
@@ -66,26 +75,22 @@ export default async function handler(req, res) {
 
     const atribuicao = rows[0];
 
-    // 3. Atualiza o contato no GoHighLevel com os dados encontrados
+    // 3. Atualiza o contato no GoHighLevel com os IDs corretos
     let ghlAtualizado = false;
     let ghlResposta = null;
 
     if (ghlApiKey) {
-      // Formata a data para formato legível no campo data_horario (ex: 18/11/2026 17:40:00)
       const dataCriacao = new Date(atribuicao.criado_em);
       const dataFormatada = dataCriacao.toLocaleString('pt-BR', { timeZone: 'America/Bahia' });
 
-      // Atualiza os campos personalizados do contato
-      // No GHL v3 ou v2, usamos PUT /contacts/{id} com customFields
-      const payloadGhl = {
-        customFields: [
-          { key: 'gclid_contact', field_value: atribuicao.gclid || '' },
-          { key: 'gbraid_contact', field_value: atribuicao.gbraid || '' },
-          { key: 'wbraid_contact', field_value: atribuicao.wbraid || '' },
-          { key: 'cdigo_whatsapp', field_value: atribuicao.ref || '' },
-          { key: 'data_horario', field_value: dataFormatada }
-        ]
-      };
+      // Formato oficial do GHL v3 / v2: array de objetos { id, value }
+      const customFields = [
+        { id: GHL_FIELD_IDS.GCLID, value: atribuicao.gclid || '' },
+        { id: GHL_FIELD_IDS.GBRAID, value: atribuicao.gbraid || '' },
+        { id: GHL_FIELD_IDS.WBRAID, value: atribuicao.wbraid || '' },
+        { id: GHL_FIELD_IDS.CODIGO_WHATSAPP, value: atribuicao.ref || '' },
+        { id: GHL_FIELD_IDS.DATA_HORARIO, value: dataFormatada }
+      ];
 
       const respGhl = await fetch(`${ghlBaseUrl.replace(/\/$/, '')}/contacts/${encodeURIComponent(contactId)}`, {
         method: 'PUT',
@@ -94,7 +99,7 @@ export default async function handler(req, res) {
           'Version': '2021-07-28',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payloadGhl)
+        body: JSON.stringify({ customFields })
       });
 
       if (respGhl.ok) {
