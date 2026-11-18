@@ -1,31 +1,41 @@
 // ID do campo personalizado "data horario" no GHL
 const GHL_DATA_HORARIO_FIELD_ID = '1xyTbwoNC4gmmEv03WDT';
 
+// Memória rápida de últimos disparos para diagnóstico
+let ultimosLogs = [];
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
+
+  // Se for GET, exibe os últimos webhooks recebidos
+  if (req.method === 'GET') {
+    return res.status(200).json({ logs: ultimosLogs });
+  }
 
   const ghlApiKey = process.env.GHL_API_KEY;
   const ghlBaseUrl = process.env.GHL_API_BASE_URL || 'https://services.leadconnectorhq.com';
 
-  if (!ghlApiKey) {
-    return res.status(500).json({ error: 'GHL_API_KEY ausente.' });
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  
+  // Registra o log do que o GHL enviou
+  const logItem = {
+    horario: new Date().toISOString(),
+    bodyRecebido: body
+  };
+  ultimosLogs.unshift(logItem);
+  if (ultimosLogs.length > 10) ultimosLogs.pop();
+
+  const contactId = body.contact_id || body.contactId || body.contact?.id;
+
+  if (!contactId) {
+    return res.status(400).json({ error: 'contact_id ausente no payload.', recebido: body });
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const contactId = body.contact_id || body.contactId || body.contact?.id;
-
-    if (!contactId) {
-      return res.status(400).json({ error: 'contact_id ausente no payload.' });
-    }
-
-    // Calcula a data e hora atual no fuso horário do Brasil (America/Sao_Paulo)
-    // Formato exato exigido pelo Google Ads: yyyy-MM-dd HH:mm:ss
     const agora = new Date();
     const formatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Sao_Paulo',
@@ -38,30 +48,25 @@ export default async function handler(req, res) {
       hour12: false
     });
 
-    // en-CA gera no formato YYYY-MM-DD, HH:mm:ss
     const partes = formatter.format(agora).replace(',', '');
     const dataHoraFormatadaGoogle = partes.trim();
 
-    // Atualiza o campo "data horario" no contato do GHL
-    const payloadGhl = {
-      customFields: [
-        { id: GHL_DATA_HORARIO_FIELD_ID, value: dataHoraFormatadaGoogle }
-      ]
-    };
+    if (ghlApiKey) {
+      const payloadGhl = {
+        customFields: [
+          { id: GHL_DATA_HORARIO_FIELD_ID, value: dataHoraFormatadaGoogle }
+        ]
+      };
 
-    const respGhl = await fetch(`${ghlBaseUrl.replace(/\/$/, '')}/contacts/${encodeURIComponent(contactId)}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${ghlApiKey}`,
-        'Version': '2021-07-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payloadGhl)
-    });
-
-    if (!respGhl.ok) {
-      const errTxt = await respGhl.text();
-      throw new Error(`Falha ao gravar data_horario no GHL: ${respGhl.status} - ${errTxt}`);
+      await fetch(`${ghlBaseUrl.replace(/\/$/, '')}/contacts/${encodeURIComponent(contactId)}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${ghlApiKey}`,
+          'Version': '2021-07-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payloadGhl)
+      });
     }
 
     return res.status(200).json({
