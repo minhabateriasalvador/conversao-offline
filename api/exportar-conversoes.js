@@ -190,7 +190,7 @@ function renderizarPaginaHtml(mesPadrao) {
 
     <div class="field">
       <label for="nomeConversao">Nome da ação de conversão no Google Ads</label>
-      <input type="text" id="nomeConversao" value="Venda WhatsApp">
+      <input type="text" id="nomeConversao" value="Conversão Offline - Whatsapp">
     </div>
 
     <label class="checkbox-row" for="incluirTelefone">
@@ -226,7 +226,7 @@ function renderizarPaginaHtml(mesPadrao) {
 
     btn.addEventListener('click', async () => {
       const mes = mesInput.value;
-      const nome = (nomeInput.value || 'Venda WhatsApp').trim();
+      const nome = (nomeInput.value || 'Conversão Offline - Whatsapp').trim();
       const incluirTel = telInput.checked ? '1' : '0';
 
       if (!mes) {
@@ -321,7 +321,7 @@ export default async function handler(req, res) {
     formato,
     mes,
     dias,
-    nome_conversao = 'Venda WhatsApp',
+    nome_conversao = 'Conversão Offline - Whatsapp',
     incluir_telefone = '0'
   } = req.query;
 
