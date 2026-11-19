@@ -52,7 +52,12 @@ export default async function handler(req, res) {
     if (!ref) {
       return res.status(200).json({
         status: 'ignorado',
-        motivo: 'nenhum codigo invisivel encontrado na mensagem'
+        motivo: 'nenhum codigo invisivel encontrado na mensagem',
+        diagnostico: {
+          tamanho_texto: messageText.length,
+          trecho_inicio: messageText.slice(0, 35),
+          tem_zw: /[\u200B\u200C\u200D\u2060\u2063]/.test(messageText)
+        }
       });
     }
 
